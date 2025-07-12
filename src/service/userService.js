@@ -1,9 +1,11 @@
 import createConnection from "../configs/dbConfig";
 import bcrypt from "bcryptjs";
+import db from "../models";
+import { where } from "sequelize/lib/sequelize";
 
 const userService = {
     hashUserPassword: (userPassword) => {
-        const salt = bcrypt.genSaltSync(10)
+        const salt = bcrypt.genSaltSync(10);
         let hashedPassword = bcrypt.hashSync(userPassword, salt);
         return hashedPassword;
     },
@@ -12,21 +14,21 @@ const userService = {
         try {
             let hashedPassword = userService.hashUserPassword(password);
 
-            const connection = await createConnection();
-            connection.query(
-                // `INSERT INTO users (email, password, username) VALUES ("${email}", "${password}", "${username}")`,
-                "INSERT INTO users (email, password, username) VALUES (?, ?, ?)",
-                [email, hashedPassword, username],
-            );
+            await db.User.create({
+                username: username,
+                email: email,
+                password: hashedPassword,
+            });
         } catch (err) {
             console.log(">> Error in creating new user: ", err);
         }
     },
-    
+
     getUsersList: async () => {
         try {
-            const connection = await createConnection();
-            const [users] = await connection.query("SELECT * FROM users");
+            const users = await db.User.findAll({
+                attributes: ["id", "email", "username"],
+            });
 
             return users;
         } catch (err) {
@@ -36,31 +38,50 @@ const userService = {
 
     deleteUserById: async (userId) => {
         try {
-            const connection = await createConnection()
-            await connection.query(`DELETE FROM users WHERE id=${userId}`)
-        } catch(err) {
-            console.log(">> Error in deleting user by id: ", err)
+            await db.User.destroy({
+                where: {
+                    id: userId,
+                },
+            });
+        } catch (err) {
+            console.log(">> Error in deleting user by id: ", err);
         }
     },
 
     getUserInformationById: async (userId) => {
         try {
-            const connection = await createConnection()
-            const [userInformation] = await connection.query(`SELECT id, email, username FROM users WHERE id=${userId}`)
-            return userInformation[0]
-        } catch(err) {
-            console.log(">> Error in getting user information by ID: ", err)
+            const user = await db.User.findOne({
+                attributes: ["id", "email", "username"],
+
+                where: {
+                    id: userId,
+                },
+            });
+
+            return user;
+        } catch (err) {
+            console.log(">> Error in getting user information by ID: ", err);
         }
     },
 
     updateUserInformationById: async (userId, email, username) => {
         try {
-            const connection = await createConnection()
-            await connection.query(`UPDATE users SET email='${email}', username='${username}' WHERE id=${userId}`)
-        } catch(err) {
-            console.log(">> Error in updating user information by ID: ", err)
+            await db.User.update(
+                {
+                    email: email,
+                    username: username,
+                },
+
+                {
+                    where: {
+                        id: userId,
+                    },
+                },
+            );
+        } catch (err) {
+            console.log(">> Error in updating user information by ID: ", err);
         }
     },
 };
 
-export default userService
+export default userService;
