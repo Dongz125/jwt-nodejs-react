@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import app from "./src/app.js";
+import JWTActions from "./src/middleware/JWTActions.js";
 
 dotenv.config();
 

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import db from "../models";
-import { where } from "sequelize/lib/sequelize";
+import jwtService from "./jwtService";
+import JWTActions from "../middleware/JWTActions";
 
 const loginRegisterService = {
     hashPassword: (password) => {
@@ -116,6 +117,7 @@ const loginRegisterService = {
                 username: username,
                 phone: phone,
                 password: hashedPassword,
+                groupId: 0,
             });
 
             return {
@@ -156,13 +158,19 @@ const loginRegisterService = {
             );
 
             if (isMatch) {
+                const roleData = await jwtService.getRoles(user);
+                const payload = {
+                        username: user.username,
+                        email: user.email,
+                        roles: roleData,
+                    }
+
+                    const token = JWTActions.createToken(payload)
+                
                 return {
                     EM: "Log in successfully!",
                     EC: 0,
-                    DT: {
-                        username: user.username,
-                        email: user.email,
-                    },
+                    DT: token,
                 };
             } else {
                 return {
@@ -175,10 +183,10 @@ const loginRegisterService = {
             console.log(">> Error in log in: ", err);
 
             return {
-                    EM: "Something wrong in logging in!",
-                    EC: -1,
-                    DT: "",
-                };
+                EM: "Something wrong in logging in!",
+                EC: -1,
+                DT: "",
+            };
         }
     },
 };

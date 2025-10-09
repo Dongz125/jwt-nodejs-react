@@ -1,5 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import configViewEngine from "./configs/viewEngine";
 import initWebRoutes from "./routes";
 import connectDB from "./configs/connectDB";
@@ -22,6 +23,9 @@ configViewEngine(app);
 // config body-parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// config cookie-parser
+app.use(cookieParser())
 
 // test connect to db
 connectDB();
